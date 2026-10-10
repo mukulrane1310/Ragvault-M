@@ -1,0 +1,25 @@
+# Python
+backend/venv/
+backend/app.db
+__pycache__/
+*.pyc
+
+# Environment secrets
+.env
+
+# ChromaDB data
+backend/chroma_db/
+
+# Uploaded files (user data, shouldn't be in git)
+backend/uploads/*.pdf
+
+# Node/React
+frontend/node_modules/
+frontend/dist/
+
+# VS Code local settings
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
