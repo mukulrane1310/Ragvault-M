@@ -1,6 +1,4 @@
 import io
-import os
-
 import cloudinary.uploader
 import cloudinary.utils
 import pdfplumber
@@ -136,19 +134,19 @@ async def delete_document(
         }
     )
 
-    file_path = f"uploads/{doc_id}.pdf"
-
-    if os.path.exists(file_path):
-        os.remove(file_path)
-
-    cloudinary.uploader.destroy(
-        f"ragvault/pdfs/{doc_id}.pdf",
+    cloudinary_result = cloudinary.uploader.destroy(
+        f"ragvault/pdfs/{doc_id}",
         resource_type="raw",
         type="upload",
     )
 
+    print("Cloudinary delete result:", cloudinary_result)
+
     documents_collection.delete_one(
-        {"id": doc_id}
+        {
+            "id": doc_id,
+            "owner_id": current_user["id"],
+        }
     )
 
     return {

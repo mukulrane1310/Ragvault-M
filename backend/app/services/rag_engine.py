@@ -34,14 +34,16 @@ def confidence_label(score: int) -> str:
         return "low"
 
 
-def answer_question(
-    question: str,
-    doc_id: str | None = None
-) -> dict:
-    retrieved_chunks = search_similar(
-        question,
-        doc_id=doc_id
-    )
+def answer_question(question: str, doc_ids: list[str]) -> dict:
+    retrieved_chunks = search_similar(question, doc_ids=doc_ids)
+
+    if not retrieved_chunks:
+        return {
+            "answer": "I couldn't find anything relevant in your documents.",
+            "sources": [],
+            "confidence": 0,
+            "confidence_label": "low",
+        }
 
     context = "\n\n".join(
         chunk["text"]

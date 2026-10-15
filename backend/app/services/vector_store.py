@@ -52,9 +52,12 @@ def store_chunks(
 
 def search_similar(
     query: str,
-    doc_id: str | None = None,
+    doc_ids: list[str],
     top_k: int = 4,
 ) -> list[dict]:
+    if not doc_ids:
+        return []
+
     query_embedding = create_embeddings([query])[0]
 
     vector_stage = {
@@ -64,13 +67,9 @@ def search_similar(
             "queryVector": query_embedding,
             "numCandidates": max(top_k * 10, 20),
             "limit": top_k,
+            "filter": {"doc_id": {"$in": doc_ids}},
         }
     }
-
-    if doc_id:
-        vector_stage["$vectorSearch"]["filter"] = {
-            "doc_id": doc_id
-        }
 
     pipeline = [
         vector_stage,

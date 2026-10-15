@@ -1,10 +1,13 @@
 import json
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.services.rag_engine import answer_question
-from app.db.mongodb import chat_messages_collection
+from app.db.mongodb import (
+    chat_messages_collection,
+    documents_collection,
+)
 from app.api.deps import get_current_user
 
 router = APIRouter()
@@ -16,7 +19,36 @@ async def query(
     doc_id: str | None = None,
     current_user=Depends(get_current_user),
 ):
-    result = answer_question(question, doc_id=doc_id)
+    if doc_id:
+        owned = documents_collection.find_one(
+            {
+                "id": doc_id,
+                "owner_id": current_user["id"],
+            },
+            {"id": 1},
+        )
+
+        if not owned:
+            raise HTTPException(
+                status_code=404,
+                detail="Document not found",
+            )
+
+        allowed_ids = [doc_id]
+
+    else:
+        allowed_ids = [
+            d["id"]
+            for d in documents_collection.find(
+                {"owner_id": current_user["id"]},
+                {"id": 1},
+            )
+        ]
+
+    result = answer_question(
+        question,
+        doc_ids=allowed_ids,
+    )
 
     try:
         chat_entry = {
