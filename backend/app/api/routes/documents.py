@@ -1,4 +1,6 @@
+
 import io
+
 import cloudinary.uploader
 import cloudinary.utils
 import pdfplumber
@@ -60,24 +62,34 @@ async def get_page_image(
         public_id,
         format="pdf",
         resource_type="raw",
-        type="upload",
+        type="authenticated",
         attachment=False,
     )
 
-    pdf_response = requests.get(
-        download_url,
-        timeout=30,
-    )
-
-    if not pdf_response.ok:
+    try:
+        pdf_response = requests.get(
+            download_url,
+            timeout=30,
+        )
+    except requests.RequestException as exc:
+        print(f"Cloudinary PDF download failed: {exc}")
         raise HTTPException(
             status_code=502,
             detail="Failed to download PDF file",
         )
 
-    pdf_bytes = io.BytesIO(
-        pdf_response.content
-    )
+    if not pdf_response.ok:
+        print(
+            "Cloudinary PDF download failed:",
+            pdf_response.status_code,
+            download_url,
+        )
+        raise HTTPException(
+            status_code=502,
+            detail="Failed to download PDF file",
+        )
+
+    pdf_bytes = io.BytesIO(pdf_response.content)
 
     with pdfplumber.open(pdf_bytes) as pdf:
         if page_number < 1 or page_number > len(pdf.pages):
@@ -87,18 +99,10 @@ async def get_page_image(
             )
 
         page = pdf.pages[page_number - 1]
-
-        rendered = page.to_image(
-            resolution=150
-        )
+        rendered = page.to_image(resolution=150)
 
     buffer = io.BytesIO()
-
-    rendered.original.save(
-        buffer,
-        format="PNG",
-    )
-
+    rendered.original.save(buffer, format="PNG")
     buffer.seek(0)
 
     return Response(
@@ -137,7 +141,7 @@ async def delete_document(
     cloudinary_result = cloudinary.uploader.destroy(
         f"ragvault/pdfs/{doc_id}",
         resource_type="raw",
-        type="upload",
+        type="authenticated",
     )
 
     print("Cloudinary delete result:", cloudinary_result)

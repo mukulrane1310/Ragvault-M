@@ -42,7 +42,6 @@ const ROADMAP = [
   { label: "Answer grounding confidence score", done: true },
   { label: "Visual PDF source highlighting", done: true },
   { label: "Streaming responses", done: false },
-  { label: "Evaluation dashboard", done: false },
   { label: "Team / shared workspaces", done: false },
 ];
 

@@ -66,16 +66,14 @@ async def upload_pdf(
     try:
         file.file.seek(0)
 
-        upload_result = cloudinary.uploader.upload(
+        cloudinary.uploader.upload(
             file.file,
             resource_type="raw",
+            type="authenticated",
             folder="ragvault/pdfs",
             public_id=doc_id,
             overwrite=True,
-            access_mode="public",
         )
-
-        file_url = upload_result["secure_url"]
 
         chunks_stored = store_chunks(doc_id, all_chunks)
 
@@ -84,14 +82,14 @@ async def upload_pdf(
             "filename": file.filename,
             "category": category,
             "chunks_stored": chunks_stored,
-            "file_url": file_url,
             "uploaded_at": datetime.utcnow(),
             "owner_id": current_user["id"],
         }
 
         documents_collection.insert_one(new_document)
 
-    except Exception:
+    except Exception as e:
+        print(f"PDF upload or processing failed: {e}")
         raise HTTPException(
             status_code=500,
             detail="PDF upload or processing failed. Please check server logs.",
@@ -102,5 +100,4 @@ async def upload_pdf(
         "filename": file.filename,
         "category": category,
         "chunks_stored": chunks_stored,
-        "file_url": file_url,
     }
